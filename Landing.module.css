@@ -1,0 +1,32 @@
+'use client';
+
+import React from 'react';
+import AppShell from '@/components/layout/AppShell';
+import FoodAnalyzer from '@/components/analyzer/FoodAnalyzer';
+import { ScanSearch, Sparkles } from 'lucide-react';
+import styles from './Analyzer.module.css';
+
+export default function AnalyzerPage() {
+  return (
+    <AppShell>
+      <div className="page-content">
+        <div className={styles.header}>
+          <div>
+            <h1 className={styles.title}>
+              <ScanSearch size={28} style={{ color: 'var(--accent-teal)' }} />
+              Food Snap Analyzer
+            </h1>
+            <p className={styles.subtitle}>
+              Upload any food image and let Gemini AI analyze its nutritional profile instantly
+            </p>
+          </div>
+          <div className="gemini-badge">
+            <Sparkles size={12} />
+            Gemini Vision
+          </div>
+        </div>
+        <FoodAnalyzer />
+      </div>
+    </AppShell>
+  );
+}

@@ -1,0 +1,23 @@
+'use client';
+
+import React from 'react';
+import AppShell from '@/components/layout/AppShell';
+import DemoModeButton from '@/components/dashboard/DemoModeButton';
+import SyncSignalPanel from '@/components/dashboard/SyncSignalPanel';
+import BiteRiskGauge from '@/components/dashboard/BiteRiskGauge';
+import InterventionNudges from '@/components/dashboard/InterventionNudges';
+import RescueTracker from '@/components/dashboard/RescueTracker';
+
+export default function DashboardPage() {
+  return (
+    <AppShell>
+      <div className="page-content">
+        <DemoModeButton />
+        <SyncSignalPanel />
+        <BiteRiskGauge />
+        <InterventionNudges />
+        <RescueTracker />
+      </div>
+    </AppShell>
+  );
+}

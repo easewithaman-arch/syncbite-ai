@@ -1,0 +1,41 @@
+'use client';
+
+import React from 'react';
+import { motion } from 'framer-motion';
+import { useSyncBite } from '@/lib/store';
+import { Zap, AlertTriangle } from 'lucide-react';
+import styles from './DemoModeButton.module.css';
+
+export default function DemoModeButton() {
+  const { isDemoMode, activateDemoMode, deactivateDemoMode } = useSyncBite();
+
+  return (
+    <div className={styles.wrapper}>
+      {!isDemoMode ? (
+        <motion.button
+          className={styles.demoBtn}
+          onClick={activateDemoMode}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <div className={styles.btnGlow} />
+          <Zap size={20} />
+          <div className={styles.btnText}>
+            <span className={styles.btnTitle}>Run Live SyncBite Prediction</span>
+            <span className={styles.btnSub}>Simulates poor health signals for judge demo</span>
+          </div>
+        </motion.button>
+      ) : (
+        <motion.button
+          className={styles.resetBtn}
+          onClick={deactivateDemoMode}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <AlertTriangle size={18} />
+          <span>Exit Demo Mode — Reset to Normal</span>
+        </motion.button>
+      )}
+    </div>
+  );
+}

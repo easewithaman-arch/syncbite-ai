@@ -1,0 +1,37 @@
+import type { Metadata } from 'next';
+import './globals.css';
+import { SyncBiteProvider } from '@/lib/store';
+
+export const metadata: Metadata = {
+  title: 'SyncBite — AI Food Decision Intelligence',
+  description:
+    'Context-aware food decision intelligence platform that predicts unhealthy eating moments before they happen and provides instant preventive interventions. Powered by Gemini AI.',
+  keywords: [
+    'food AI',
+    'health tech',
+    'craving prevention',
+    'smart nutrition',
+    'Gemini AI',
+    'wearable health',
+  ],
+  openGraph: {
+    title: 'SyncBite — AI that syncs with your body before your next bite',
+    description:
+      'Predict and prevent unhealthy eating with real-time health signal analysis and smart AI interventions.',
+    type: 'website',
+  },
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body>
+        <SyncBiteProvider>{children}</SyncBiteProvider>
+      </body>
+    </html>
+  );
+}

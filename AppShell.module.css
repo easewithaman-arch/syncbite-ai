@@ -1,0 +1,180 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useSyncBite } from '@/lib/store';
+import { AlertTriangle, ShieldAlert, Sparkles } from 'lucide-react';
+import styles from './BiteRiskGauge.module.css';
+
+export default function BiteRiskGauge() {
+  const { riskResult, isDemoMode } = useSyncBite();
+  const [animatedScore, setAnimatedScore] = useState(0);
+
+  useEffect(() => {
+    const target = riskResult.overallScore;
+    const duration = 800;
+    const startTime = Date.now();
+    const startVal = animatedScore;
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+      setAnimatedScore(Math.round(startVal + (target - startVal) * eased));
+      if (progress < 1) requestAnimationFrame(animate);
+    };
+
+    requestAnimationFrame(animate);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [riskResult.overallScore]);
+
+  const riskLevel =
+    animatedScore > 75
+      ? { label: 'CRITICAL', color: 'var(--risk-critical)', bg: 'rgba(239,68,68,0.08)' }
+      : animatedScore > 50
+      ? { label: 'ELEVATED', color: 'var(--risk-high)', bg: 'rgba(249,115,22,0.08)' }
+      : animatedScore > 30
+      ? { label: 'MODERATE', color: 'var(--risk-moderate)', bg: 'rgba(245,158,11,0.08)' }
+      : { label: 'LOW', color: 'var(--risk-low)', bg: 'rgba(34,197,94,0.08)' };
+
+  // SVG gauge arc
+  const radius = 80;
+  const circumference = Math.PI * radius;
+  const strokeOffset = circumference - (animatedScore / 100) * circumference;
+
+  const subScores = [
+    { label: 'Junk Food', value: riskResult.junkFoodVulnerability, color: '#f97316' },
+    { label: 'Emotional Eating', value: riskResult.emotionalEatingProbability, color: '#ef4444' },
+    { label: 'Sugar Craving', value: riskResult.sugarCravingRisk, color: '#ec4899' },
+    { label: 'Skipped Meal', value: riskResult.skippedMealRisk, color: '#f59e0b' },
+    { label: 'Fatigue Eating', value: riskResult.fatigueEatingPossibility, color: '#a855f7' },
+  ];
+
+  return (
+    <section className={styles.section}>
+      <div className={styles.header}>
+        <h2 className={styles.title}>
+          <ShieldAlert size={22} style={{ color: riskLevel.color }} />
+          Bite Risk Prediction
+        </h2>
+        {isDemoMode && (
+          <span className="badge badge-red">
+            <AlertTriangle size={12} /> DEMO MODE ACTIVE
+          </span>
+        )}
+      </div>
+
+      <div className={styles.content}>
+        {/* Gauge */}
+        <div className={styles.gaugeContainer}>
+          <svg viewBox="0 0 200 120" className={styles.gauge}>
+            {/* Background arc */}
+            <path
+              d="M 20 100 A 80 80 0 0 1 180 100"
+              fill="none"
+              stroke="rgba(148,163,184,0.08)"
+              strokeWidth="12"
+              strokeLinecap="round"
+            />
+            {/* Filled arc */}
+            <motion.path
+              d="M 20 100 A 80 80 0 0 1 180 100"
+              fill="none"
+              stroke={riskLevel.color}
+              strokeWidth="12"
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeOffset}
+              style={{
+                filter: `drop-shadow(0 0 8px ${riskLevel.color})`,
+              }}
+            />
+          </svg>
+          <div className={styles.gaugeValue}>
+            <span className={styles.scoreNumber} style={{ color: riskLevel.color }}>
+              {animatedScore}
+            </span>
+            <span className={styles.scoreLabel} style={{ color: riskLevel.color }}>
+              {riskLevel.label}
+            </span>
+          </div>
+        </div>
+
+        {/* Sub-scores */}
+        <div className={styles.subScores}>
+          {subScores.map((sub) => (
+            <div key={sub.label} className={styles.subScore}>
+              <div className={styles.subHeader}>
+                <span className={styles.subLabel}>{sub.label}</span>
+                <span className={styles.subValue} style={{ color: sub.color }}>
+                  {sub.value}%
+                </span>
+              </div>
+              <div className={styles.subBar}>
+                <motion.div
+                  className={styles.subFill}
+                  style={{ background: sub.color }}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${sub.value}%` }}
+                  transition={{ duration: 0.8, ease: 'easeOut' }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Warnings */}
+      <AnimatePresence>
+        {riskResult.warnings.length > 0 && (
+          <motion.div
+            className={styles.warnings}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+          >
+            <h3 className={styles.warningsTitle}>
+              <AlertTriangle size={16} /> Active Warnings
+            </h3>
+            {riskResult.warnings.map((w) => (
+              <motion.div
+                key={w.id}
+                className={`${styles.warningCard} ${styles[w.severity]}`}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className={styles.warningBadge}>{w.severity.toUpperCase()}</div>
+                <p className={styles.warningMessage}>{w.message}</p>
+                <div className={styles.warningFactors}>
+                  {w.factors.map((f) => (
+                    <span key={f} className={styles.factorTag}>
+                      {f}
+                    </span>
+                  ))}
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Gemini Reasoning */}
+      {riskResult.geminiReasoning && (
+        <div className={styles.geminiSection}>
+          <div className={styles.geminiHeader}>
+            <Sparkles size={16} style={{ color: '#8ab4f8' }} />
+            <span>Gemini AI Health Reasoning</span>
+          </div>
+          <div className={styles.geminiContent}>
+            {riskResult.geminiReasoning.split('\n\n').map((para, i) => (
+              <p key={i} dangerouslySetInnerHTML={{
+                __html: para.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+              }} />
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}

@@ -1,0 +1,244 @@
+'use client';
+
+import React from 'react';
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from 'recharts';
+import { motion } from 'framer-motion';
+import { useSyncBite } from '@/lib/store';
+import {
+  TrendingUp,
+  Droplets,
+  Repeat,
+  Zap,
+  ShieldCheck,
+  Flame,
+} from 'lucide-react';
+import styles from './AnalyticsDashboard.module.css';
+
+const container = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.1 } },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload) return null;
+  return (
+    <div className={styles.tooltip}>
+      <div className={styles.tooltipLabel}>{label}</div>
+      {payload.map((p: { name: string; value: number; color: string }) => (
+        <div key={p.name} className={styles.tooltipRow}>
+          <span style={{ color: p.color }}>●</span>
+          <span>{p.name}:</span>
+          <strong>{p.value}</strong>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default function AnalyticsDashboard() {
+  const { weeklyAnalytics, rescueStats } = useSyncBite();
+
+  const summaryCards = [
+    {
+      label: 'Total Prevented',
+      value: weeklyAnalytics.reduce((s, d) => s + d.unhealthyPrevented, 0),
+      icon: ShieldCheck,
+      color: '#22c55e',
+      change: '+18%',
+    },
+    {
+      label: 'Avg Hydration',
+      value: Math.round(weeklyAnalytics.reduce((s, d) => s + d.hydrationScore, 0) / 7),
+      icon: Droplets,
+      color: '#06b6d4',
+      change: '+5%',
+      suffix: '%',
+    },
+    {
+      label: 'Healthy Swaps',
+      value: weeklyAnalytics.reduce((s, d) => s + d.healthySwaps, 0),
+      icon: Repeat,
+      color: '#a855f7',
+      change: '+12%',
+    },
+    {
+      label: 'Energy Score',
+      value: Math.round(weeklyAnalytics.reduce((s, d) => s + d.energyStability, 0) / 7),
+      icon: Zap,
+      color: '#f59e0b',
+      change: '+8%',
+      suffix: '%',
+    },
+  ];
+
+  return (
+    <motion.div variants={container} initial="hidden" animate="show">
+      {/* Summary Cards */}
+      <div className={styles.summaryGrid}>
+        {summaryCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <motion.div key={card.label} className={styles.summaryCard} variants={item}>
+              <div className={styles.summaryIcon} style={{ background: `${card.color}12`, color: card.color }}>
+                <Icon size={22} />
+              </div>
+              <div className={styles.summaryContent}>
+                <div className={styles.summaryValue}>
+                  {card.value}
+                  {card.suffix && <span className={styles.summarySuffix}>{card.suffix}</span>}
+                </div>
+                <div className={styles.summaryLabel}>{card.label}</div>
+              </div>
+              <span className={styles.summaryChange} style={{ color: card.color }}>
+                {card.change}
+              </span>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Charts Grid */}
+      <div className={styles.chartsGrid}>
+        {/* Unhealthy Decisions Prevented */}
+        <motion.div className={styles.chartCard} variants={item}>
+          <h3 className={styles.chartTitle}>
+            <TrendingUp size={18} style={{ color: '#22c55e' }} />
+            Weekly Unhealthy Decisions Prevented
+          </h3>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={weeklyAnalytics}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.06)" />
+              <XAxis dataKey="day" stroke="#64748b" fontSize={12} />
+              <YAxis stroke="#64748b" fontSize={12} />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar
+                dataKey="unhealthyPrevented"
+                name="Prevented"
+                fill="#22c55e"
+                radius={[6, 6, 0, 0]}
+                fillOpacity={0.8}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </motion.div>
+
+        {/* Hydration Trend */}
+        <motion.div className={styles.chartCard} variants={item}>
+          <h3 className={styles.chartTitle}>
+            <Droplets size={18} style={{ color: '#06b6d4' }} />
+            Hydration Trend
+          </h3>
+          <ResponsiveContainer width="100%" height={280}>
+            <AreaChart data={weeklyAnalytics}>
+              <defs>
+                <linearGradient id="hydrationGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.06)" />
+              <XAxis dataKey="day" stroke="#64748b" fontSize={12} />
+              <YAxis stroke="#64748b" fontSize={12} domain={[0, 100]} />
+              <Tooltip content={<CustomTooltip />} />
+              <Area
+                type="monotone"
+                dataKey="hydrationScore"
+                name="Hydration %"
+                stroke="#06b6d4"
+                fill="url(#hydrationGrad)"
+                strokeWidth={2}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </motion.div>
+
+        {/* Healthy Swap Frequency */}
+        <motion.div className={styles.chartCard} variants={item}>
+          <h3 className={styles.chartTitle}>
+            <Repeat size={18} style={{ color: '#a855f7' }} />
+            Healthy Food Swap Frequency
+          </h3>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={weeklyAnalytics}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.06)" />
+              <XAxis dataKey="day" stroke="#64748b" fontSize={12} />
+              <YAxis stroke="#64748b" fontSize={12} />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar
+                dataKey="healthySwaps"
+                name="Swaps"
+                fill="#a855f7"
+                radius={[6, 6, 0, 0]}
+                fillOpacity={0.8}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </motion.div>
+
+        {/* Energy Stability */}
+        <motion.div className={styles.chartCard} variants={item}>
+          <h3 className={styles.chartTitle}>
+            <Zap size={18} style={{ color: '#f59e0b' }} />
+            Energy Stability Score
+          </h3>
+          <ResponsiveContainer width="100%" height={280}>
+            <LineChart data={weeklyAnalytics}>
+              <defs>
+                <linearGradient id="energyGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.06)" />
+              <XAxis dataKey="day" stroke="#64748b" fontSize={12} />
+              <YAxis stroke="#64748b" fontSize={12} domain={[0, 100]} />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="energyStability"
+                name="Energy %"
+                stroke="#f59e0b"
+                strokeWidth={2}
+                dot={{ fill: '#f59e0b', r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </motion.div>
+      </div>
+
+      {/* Streak Card */}
+      <motion.div className={styles.streakCard} variants={item}>
+        <Flame size={32} style={{ color: '#f97316' }} />
+        <div className={styles.streakInfo}>
+          <span className={styles.streakValue}>{rescueStats.decisionStreak}</span>
+          <span className={styles.streakLabel}>Day Decision Streak 🔥</span>
+        </div>
+        <p className={styles.streakDesc}>
+          You&apos;ve made healthy choices for {rescueStats.decisionStreak} consecutive days.
+          Keep going to build stronger neural pathways!
+        </p>
+      </motion.div>
+    </motion.div>
+  );
+}
